@@ -1,7 +1,7 @@
 # Личный проект «Кэндишоп» [![Build status][travis-image]][travis-url]
 
 * Студент: [Галина Тужик](https://up.htmlacademy.ru/javascript/15/user/402337).
-* Наставник: `Неизвестно`.
+* Наставник: `Без наставника`.
 
 ---
 
