@@ -661,7 +661,7 @@ var scalePrice = minMaxPrice.priceMax - minMaxPrice.priceMin;
 
 var scaleWidth = rangeFilter.offsetWidth - rangeBtnRight.offsetWidth;
 
-var step = scalePrice / scaleWidth; // шаг
+var step = scalePrice / scaleWidth;
 
 var minMaxCoord = {
   minX: rangeFilter.offsetLeft,
