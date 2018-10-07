@@ -85,6 +85,59 @@ var contentsProducts = [
   'виллабаджо'
 ];
 
+// заблокировать и разблокировать форму
+
+var sectionBuy = document.querySelector('.buy');
+var sectionBuyForm = sectionBuy.querySelector('form');
+var inputsForm = sectionBuyForm.querySelectorAll('input');
+var buySubmitBtn = document.querySelector('.buy__submit-btn');
+
+var getRemoveDisable = function (element) {
+  for (var i = 0; i < element.length; i++) {
+    element[i].removeAttribute('disabled');
+  }
+};
+
+var getSetDisable = function (element) {
+  for (var i = 0; i < element.length; i++) {
+    element[i].setAttribute('disabled', 'disable');
+  }
+};
+
+getSetDisable(inputsForm);
+buySubmitBtn.setAttribute('disabled', 'disable');
+
+// статус карты
+
+
+/*
+// покажи еще
+var onBtnMoreClick = function (evt) {
+  evt.preventDefault();
+
+  if (evt.target.classList.contains('catalog__btn-more') {
+
+  }
+
+};
+*/
+
+// класс для товара
+
+var getClassCardAmount = function (element, elementNod) {
+
+  var classCardAmount = 'card--little';
+  if (element.amount === 0) {
+    classCardAmount = 'card--soon';
+  }
+  if (element.amount > 5) {
+    classCardAmount = 'card--in-stock';
+  }
+
+  elementNod.classList = '';
+  elementNod.classList.add('catalog__card', 'card', classCardAmount);
+};
+
 var getIndexProductEvent = function (name) {
   return function (element) {
     return element.name === name;
@@ -184,6 +237,7 @@ var getProductBag = function (card) {
 var renderProducts = function (products) {
 
   document.querySelector('.catalog__load').classList.add(HIDDEN);
+  document.querySelector('.catalog__btn-more').classList.remove(HIDDEN);
 
   var catalogCards = document.querySelector('.catalog__cards');
   catalogCards.classList.remove('catalog__cards--load');
@@ -238,6 +292,8 @@ var renderProducts = function (products) {
 
     cardProduct.querySelector('.card__composition-list').innerHTML = products[i].nutritionFacts.contents;
 
+    // cardProduct.querySelector('.catalog__card').addEventListener('click', onProductClick); // !!!!!
+
     catalogCards.appendChild(cardProduct);
   }
 };
@@ -268,12 +324,15 @@ var renderBag = function (order) {
 
     bagProduct.querySelector('.card-order__close').addEventListener('click', onButtonCloseBagClick);
     bagProduct.querySelector('.card-order__main').addEventListener('click', onButtonAmountBagClick);
+    // bagProduct.querySelector('.goods_card').addEventListener('click', onProductClick); //!!!!
 
     goodsCards.appendChild(bagProduct);
   }
 
   document.querySelector('.goods__card-empty').classList.add(HIDDEN);
   document.querySelector('.goods__total').classList.remove(HIDDEN);
+  getRemoveDisable(inputsForm);
+  buySubmitBtn.removeAttribute('disabled');
 };
 
 // ВЫЗОВ ФУНКЦИЙ
@@ -292,6 +351,12 @@ var OnButtonCardAddClick = function (evt) {
 
   if (evt.target.classList.contains('card__btn')) {
 
+    // проверяем класс
+
+    if (evt.currentTarget.classList.contains('card--soon')) {
+      return;
+    }
+
     // вытаскиваем имя карточки
 
     var productEvent = evt.currentTarget.querySelector('.card__title').textContent;
@@ -304,6 +369,9 @@ var OnButtonCardAddClick = function (evt) {
 
     listProducts[indexProductEvent].amount--;
 
+    // проверяем класс в доме и меняем при необходимости
+
+    getClassCardAmount(listProducts[indexProductEvent], evt.currentTarget);
     // вытаскиеваем id карточки
 
     var idProductEvent = evt.currentTarget.getAttribute('id');
@@ -341,6 +409,14 @@ var onButtonCloseBagClick = function (evt) {
 
     var productEvent = evt.target.parentElement.querySelector('.card-order__title').textContent;
 
+    // Добавляем кол-во обратно
+
+    var indexProductEvent = listProducts.findIndex(getIndexProductEvent(productEvent));
+
+    var idProduct = '#catalog-card__' + evt.target.parentElement.querySelector('.card-order__count').name;
+
+    listProducts[indexProductEvent].amount += parseInt(evt.target.parentElement.querySelector('.card-order__count').value, 10);
+
     // ищем карточку по имени в массиве корзины товаров и удаляем
 
     listProductsBag = listProductsBag.filter(function (product) {
@@ -357,8 +433,14 @@ var onButtonCloseBagClick = function (evt) {
     if (listProductsBag.length === 0) {
       document.querySelector('.goods__card-empty').classList.remove(HIDDEN);
       document.querySelector('.goods__total').classList.add(HIDDEN);
+      getSetDisable(inputsForm);
+      buySubmitBtn.setAttribute('disabled', 'disable');
     }
+
     getGoodsTotalCount();
+    // проверяем класс в доме и меняем при необходимости
+
+    getClassCardAmount(listProducts[indexProductEvent], document.querySelector(idProduct));
   }
 };
 
@@ -408,9 +490,9 @@ var getGoodsPrice = function () {
 
 var catalogCard = document.querySelectorAll('.catalog__card');
 
-for (var i = 0; i < catalogCard.length; i++) {
-  catalogCard[i].addEventListener('click', OnButtonCardAddClick);
-}
+catalogCard.forEach(function (element) {
+  element.addEventListener('click', OnButtonCardAddClick);
+});
 
 // ОБРАБОТЧИКИ
 
@@ -424,6 +506,8 @@ var onButtonAmountBagClick = function (evt) {
 
   var indexProductBagEvent = listProductsBag.findIndex(getIndexProductEvent(productEvent));
   var indexProductEvent = listProducts.findIndex(getIndexProductEvent(productEvent));
+
+  var idProduct = '#catalog-card__' + evt.currentTarget.querySelector('.card-order__count').name;
 
   if (evt.target.classList.contains('card-order__btn--decrease')) {
     evt.currentTarget.querySelector('.card-order__count').value--;
@@ -444,19 +528,29 @@ var onButtonAmountBagClick = function (evt) {
 
       goodsCards.removeChild(evt.currentTarget.parentElement);
 
-      // проверяем не пустая ли карзина
+      // проверяем не пустая ли корзина
       if (listProductsBag.length === 0) {
         document.querySelector('.goods__card-empty').classList.remove(HIDDEN);
         document.querySelector('.goods__total').classList.add(HIDDEN);
+        getSetDisable(inputsForm);
+        buySubmitBtn.setAttribute('disabled', 'disable');
       }
     }
 
     listProducts[indexProductEvent].amount++;
 
     getGoodsTotalCount();
+    getClassCardAmount(listProducts[indexProductEvent], document.querySelector(idProduct));
   }
 
   if (evt.target.classList.contains('card-order__btn--increase')) {
+
+    // проверяем класс
+
+    if (document.querySelector(idProduct).classList.contains('card--soon')) {
+      return;
+    }
+
     evt.currentTarget.querySelector('.card-order__count').value++;
 
     listProductsBag[indexProductBagEvent].orderedAmount++;
@@ -464,6 +558,7 @@ var onButtonAmountBagClick = function (evt) {
     listProducts[indexProductEvent].amount--;
 
     getGoodsTotalCount();
+    getClassCardAmount(listProducts[indexProductEvent], document.querySelector(idProduct));
   }
 };
 
@@ -477,13 +572,14 @@ var OnCardBtnFavoriteClick = function (evt) {
   evt.target.blur(); // НЕ ЗАБЫТЬ УБРАТЬ
 };
 
-for (var j = 0; j < cardsBtnFavorite.length; j++) {
-  cardsBtnFavorite[j].addEventListener('click', OnCardBtnFavoriteClick);
-}
+cardsBtnFavorite.forEach(function (element) {
+  element.addEventListener('click', OnCardBtnFavoriteClick);
+});
 
 // ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
 
 var paymentInner = document.querySelector('.payment__inner');
+var paymentInputs = document.querySelector('.payment__inputs');
 
 paymentInner.addEventListener('click', function (evt) {
 
@@ -491,19 +587,21 @@ paymentInner.addEventListener('click', function (evt) {
 
     evt.currentTarget.querySelector('.payment__card-wrap').classList.remove(HIDDEN);
     evt.currentTarget.querySelector('.payment__cash-wrap').classList.add(HIDDEN);
-
+    getRemoveDisable(paymentInputs.querySelectorAll('input'));
   }
   if (evt.target.getAttribute('for') === 'payment__cash') {
 
     evt.currentTarget.querySelector('.payment__cash-wrap').classList.remove(HIDDEN);
     evt.currentTarget.querySelector('.payment__card-wrap').classList.add(HIDDEN);
-
+    getSetDisable(paymentInputs.querySelectorAll('input'));
   }
 });
 
 // ДОСТАВКА
 
 var deliver = document.querySelector('.deliver');
+var deliverStores = deliver.querySelector('.deliver__stores');
+var deliverEntry = deliver.querySelector('.deliver__entry-fields-wrap');
 
 deliver.addEventListener('click', function (evt) {
 
@@ -511,16 +609,31 @@ deliver.addEventListener('click', function (evt) {
 
     evt.currentTarget.querySelector('.deliver__store').classList.remove(HIDDEN);
     evt.currentTarget.querySelector('.deliver__courier').classList.add(HIDDEN);
+    deliverEntry.setAttribute('disabled', 'disable');
+    deliverStores.removeAttribute('disabled');
 
   }
   if (evt.target.getAttribute('for') === 'deliver__courier') {
 
     evt.currentTarget.querySelector('.deliver__courier').classList.remove(HIDDEN);
     evt.currentTarget.querySelector('.deliver__store').classList.add(HIDDEN);
+    deliverStores.setAttribute('disabled', 'disable');
+    deliverEntry.removeAttribute('disabled');
 
   }
 });
 
+// ВЫБОР МЕТРО
+
+var deliverStoreItem = document.querySelectorAll('.deliver__store-item');
+var deliverStoreMapImg = document.querySelector('.deliver__store-map-img');
+
+deliverStoreItem.forEach(function (element) {
+  element.addEventListener('click', function (evt) {
+    deliverStoreMapImg.alt = evt.target.textContent;
+    deliverStoreMapImg.src = 'img/map/' + evt.target.getAttribute('for').split('-')[1] + '.jpg';
+  });
+});
 
 // ПОЛЗУНОК нажимаем, тащим, отпускаем мышку mouseup
 
@@ -651,3 +764,133 @@ var onButtonRangeMousedown = function (evt) {
 rangeBtnLeft.addEventListener('mousedown', onButtonRangeMousedown);
 rangeBtnRight.addEventListener('mousedown', onButtonRangeMousedown);
 
+// Валидация
+
+// Банковская карта
+
+// алгоритм Луна
+
+var getValidityLuhn = function (cardNumber) {
+  var arr = cardNumber.split('').map(function (char, index) {
+    var digit = parseInt(char, 10);
+
+    if ((index + cardNumber.length) % 2 === 0) {
+      var digitX2 = digit * 2;
+
+      return digitX2 > 9 ? digitX2 - 9 : digitX2;
+    }
+    return digit;
+  });
+
+  return !(arr.reduce(function (a, b) {
+    return a + b;
+  }, 0) % 10);
+};
+
+var paymentCardNumberInput = document.querySelector('#payment__card-number');
+
+paymentCardNumberInput.addEventListener('input', function (evt) {
+  if (getValidityLuhn(evt.target.value) === false) {
+    evt.target.setCustomValidity('Проверьте номер карты');
+  } else {
+    evt.target.setCustomValidity('');
+  }
+});
+
+// paymentCardNumberInput.addEventListener('invalid', function (evt) {
+//   if (paymentCardNumberInput.validity.patternMismatch) {
+//     paymentCardNumberInput.setCustomValidity('Введите данные в формате XXXX XXXX XXXX XXXX');
+//   } else {
+//     paymentCardNumberInput.setCustomValidity('');
+//   }
+// });
+
+var paymentCardStatus = document.querySelector('.payment__card-status');
+
+var paymentInputsList = paymentInputs.querySelectorAll('input');
+
+for (var i = 0; i < paymentInputsList.length; i++) {
+  // paymentInputsList[i].addEventListener('invalid', function (evt) {
+  //   evt.currentTarget.setCustomValidity('Проверьте данные');
+  // });
+
+  paymentInputsList[i].addEventListener('blur', function (evt) {
+    // if (evt.currentTarget.validity.valid === false) {
+    //   evt.currentTarget.setCustomValidity('Проверьте данные');
+    //   // var a = evt.currentTarget.checkValidity();
+    //   // console.log(a);
+    //   // return;
+    // }
+    var resultValidity = 0;
+    for (var j = 0; j < paymentInputsList.length; j++) {
+      if (paymentInputsList[j].validity.valid === true) {
+        resultValidity++;
+      }
+    }
+    if (resultValidity === paymentInputsList.length) {
+      paymentCardStatus.textContent = 'Одобрен';
+    } else {
+      paymentCardStatus.textContent = 'не определён';
+    }
+  });
+}
+
+// // Отправляем форму
+// sectionBuyForm.addEventListener('sabmit', function (evt) {
+//   evt.preventDefault();
+// });
+
+// // проверка для всей формы
+
+// function CustomValidation() {
+//   // Установим пустой массив сообщений об ошибках
+//   this.invalidities = [];
+// }
+
+// CustomValidation.prototype = {
+//   // Метод, проверяющий валидность
+//   checkValidity: function (input) {
+
+//     var validity = input.validity;
+
+//     if (validity.tooLong) {
+//       var maxlength = input.getAttribute('maxlength');
+//       this.addInvalidity('Максимальная длина ' + maxlength);
+//     }
+
+//     if (validity.tooShort) {
+//       var minlength = input.getAttribute('minlength');
+//       this.addInvalidity('Минимальная длина ' + minlength);
+//     }
+//     // И остальные проверки валидности...
+//   },
+
+//   // Добавляем сообщение об ошибке в массив ошибок
+//   addInvalidity: function (message) {
+//     this.invalidities.push(message);
+//   },
+
+//   // Получаем общий текст сообщений об ошибках
+//   getInvalidities: function () {
+//     return this.invalidities.join('. \n');
+//   }
+// };
+
+// // Добавляем обработчик клика на кнопку отправки формы
+// buySubmitBtn.addEventListener('click', function (evt) {
+//   // Пройдёмся по всем полям
+//   for (var i = 0; i < paymentInputsList.length; i++) {
+
+//     var input = paymentInputsList[i];
+
+//     // Проверим валидность поля, используя встроенную в JavaScript функцию checkValidity()
+//     if (input.checkValidity() === false) {
+
+//       var inputCustomValidation = new CustomValidation(); // Создадим объект CustomValidation
+//       inputCustomValidation.checkValidity(input); // Выявим ошибки
+//       var customValidityMessage = inputCustomValidation.getInvalidities(); // Получим все сообщения об ошибках
+//       input.setCustomValidity(customValidityMessage); // Установим специальное сообщение об ошибке
+
+//     } // закончился if
+//   } // закончился цикл
+// });
